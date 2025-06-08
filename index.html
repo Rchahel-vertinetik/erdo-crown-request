@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Predict Tree Crowns</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+      font-size: 12px;
+      width: 100%;
+      height: 100%;
+      background-color: #353535;
+      color: white;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      justify-content: space-between;
+      padding: 8px 10px;
+      box-sizing: border-box;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 0 12px;
+    }
+
+    .main-btn {
+      background-color: #359f00;
+      color: white;
+      border: none;
+      padding: 10px 12px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .main-btn:disabled {
+      background-color: #777;
+      cursor: not-allowed;
+    }
+
+    .footer {
+      font-size: 10px;
+      color: #bbb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 10px;
+    }
+
+    .logo-spinner {
+      width: 40px;
+      height: 40px;
+      animation: spinLogo 1.2s linear infinite;
+      margin: 10px 0;
+    }
+
+    @keyframes spinLogo {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="button-row">
+    <button class="main-btn" onclick="runCrownPredict()">Predict Crowns</button>
+  </div>
+
+  <div class="footer">
+    <div id="status">Ready</div>
+    <img id="spinner" class="logo-spinner" src="logo.png" style="display: none;" alt="Loading" />
+  </div>
+</div>
+
+<script>
+  const API_BASE = "https://cloud-run-segmentation-1042524106019.us-central1.run.app/"; // Replace with your actual domain or proxy path
+
+  function getProjectFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const project = params.get("project");
+    if (!project) {
+      alert("Missing project name in URL. Use ?project=YourProjectName");
+      throw new Error("Missing project parameter");
+    }
+    return project;
+  }
+
+  function setStatus(msg) {
+    document.getElementById("status").innerText = msg;
+  }
+
+  function showSpinner(show) {
+    document.getElementById("spinner").style.display = show ? "inline-block" : "none";
+  }
+
+  function disableAllButtons(disable = true) {
+    document.querySelectorAll("button").forEach(btn => btn.disabled = disable);
+  }
+
+  async function streamPrediction(url) {
+    showSpinner(true);
+    disableAllButtons(true);
+    setStatus("Predicting...");
+
+    try {
+      const response = await fetch(url);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.trim().split("\n");
+
+        for (const line of lines) {
+          try {
+            const json = JSON.parse(line);
+            if (json.stage) setStatus("🔄 " + json.stage);
+            if (json.warning) setStatus("⚠️ " + json.warning);
+            if (json.error) setStatus("❌ " + json.error);
+          } catch {}
+        }
+      }
+
+      setStatus("✅ Prediction complete");
+    } catch (err) {
+      setStatus("❌ " + err.message);
+    } finally {
+      showSpinner(false);
+      disableAllButtons(false);
+    }
+  }
+
+  async function runCrownPredict() {
+    const project = getProjectFromURL();
+    const url = `${API_BASE}/infer_project_name?project_name=${encodeURIComponent(project)}`;
+    await streamPrediction(url);
+  }
+</script>
+
+</body>
+</html>
