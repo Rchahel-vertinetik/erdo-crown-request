@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Predict Tree Crowns</title>
+  <title>CrownSketch Prediction</title>
   <style>
     html, body {
       margin: 0;
@@ -48,6 +48,46 @@
       cursor: not-allowed;
     }
 
+    .dropdown-wrap {
+      position: relative;
+    }
+
+    .dropdown-wrap .main-btn::after {
+      content: " ▾";
+      font-size: 10px;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      background-color: #444;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
+
+    .dropdown-content button {
+      background: none;
+      border: none;
+      color: white;
+      width: 100%;
+      text-align: left;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .dropdown-content button:hover {
+      background-color: #555;
+    }
+
+    .dropdown-wrap:hover .dropdown-content {
+      display: block;
+    }
+
     .footer {
       font-size: 10px;
       color: #bbb;
@@ -72,84 +112,100 @@
 </head>
 <body>
 
-<div class="container">
-  <div class="button-row">
-    <button class="main-btn" onclick="runCrownPredict()">Predict Crowns</button>
+  <div class="container">
+    <div class="button-row">
+      <div class="dropdown-wrap">
+        <button class="main-btn" onclick="runPredict()">Predict Crowns</button>
+        <div class="dropdown-content">
+          <button onclick="runDelete()">Clear Predictions</button>
+          <button onclick="runSync()">Approve Predictions</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div id="status">Ready</div>
+      <img id="spinner" class="logo-spinner" src="logo.png" style="display: none;" alt="Loading" />
+    </div>
   </div>
 
-  <div class="footer">
-    <div id="status">Ready</div>
-    <img id="spinner" class="logo-spinner" src="logo.png" style="display: none;" alt="Loading" />
-  </div>
-</div>
+  <script>
+    const API_BASE = "https://cloud-run-segmentation-1042524106019.us-central1.run.app";
 
-<script>
-  const API_BASE = "https://cloud-run-segmentation-1042524106019.us-central1.run.app/"; // Replace with your actual domain or proxy path
-
-  function getProjectFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    const project = params.get("project");
-    if (!project) {
-      alert("Missing project name in URL. Use ?project=YourProjectName");
-      throw new Error("Missing project parameter");
-    }
-    return project;
-  }
-
-  function setStatus(msg) {
-    document.getElementById("status").innerText = msg;
-  }
-
-  function showSpinner(show) {
-    document.getElementById("spinner").style.display = show ? "inline-block" : "none";
-  }
-
-  function disableAllButtons(disable = true) {
-    document.querySelectorAll("button").forEach(btn => btn.disabled = disable);
-  }
-
-  async function streamPrediction(url) {
-    showSpinner(true);
-    disableAllButtons(true);
-    setStatus("Predicting...");
-
-    try {
-      const response = await fetch(url);
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.trim().split("\n");
-
-        for (const line of lines) {
-          try {
-            const json = JSON.parse(line);
-            if (json.stage) setStatus("🔄 " + json.stage);
-            if (json.warning) setStatus("⚠️ " + json.warning);
-            if (json.error) setStatus("❌ " + json.error);
-          } catch {}
-        }
+    function getProjectFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const project = params.get("project");
+      if (!project) {
+        alert("Missing project name in URL. Use ?project=YourProjectName");
+        throw new Error("Missing project parameter");
       }
-
-      setStatus("✅ Prediction complete");
-    } catch (err) {
-      setStatus("❌ " + err.message);
-    } finally {
-      showSpinner(false);
-      disableAllButtons(false);
+      return project;
     }
-  }
 
-  async function runCrownPredict() {
-    const project = getProjectFromURL();
-    const url = `${API_BASE}/infer_project_name?project_name=${encodeURIComponent(project)}`;
-    await streamPrediction(url);
-  }
-</script>
+    function setStatus(msg) {
+      document.getElementById("status").innerText = msg;
+    }
+
+    function showSpinner(show) {
+      document.getElementById("spinner").style.display = show ? "inline-block" : "none";
+    }
+
+    function disableAllButtons(disable = true) {
+      document.querySelectorAll("button").forEach(btn => btn.disabled = disable);
+    }
+
+    async function streamEndpoint(url, label = "Working...") {
+      showSpinner(true);
+      disableAllButtons(true);
+      setStatus(label);
+
+      try {
+        const response = await fetch(url);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        let { value, done } = await reader.read();
+        while (!done) {
+          const chunk = decoder.decode(value);
+          const lines = chunk.trim().split("\n");
+          for (const line of lines) {
+            try {
+              const json = JSON.parse(line);
+              if (json.stage) setStatus("🔄 " + json.stage);
+              if (json.warning) setStatus("⚠️ " + json.warning);
+              if (json.error) setStatus("❌ " + json.error);
+            } catch (e) {}
+          }
+          ({ value, done } = await reader.read());
+        }
+
+        setStatus("Done");
+      } catch (err) {
+        setStatus( err.message);
+      } finally {
+        showSpinner(false);
+        disableAllButtons(false);
+      }
+    }
+
+    async function runPredict() {
+      const project = getProjectFromURL();
+      const url = `${API_BASE}/infer_project_name?project_name=${encodeURIComponent(project)}`;
+      await streamEndpoint(url, "Predicting...");
+    }
+
+    async function runDelete() {
+      const project = getProjectFromURL();
+      const url = `${API_BASE}/delete_predictions?project_name=${encodeURIComponent(project)}`;
+      await streamEndpoint(url, "Deleting predictions...");
+    }
+
+    async function runSync() {
+      const project = getProjectFromURL();
+      const url = `${API_BASE}/sync_predictions_to_tree_crowns?project_name=${encodeURIComponent(project)}`;
+      await streamEndpoint(url, "Approving predictions...");
+    }
+  </script>
 
 </body>
 </html>
