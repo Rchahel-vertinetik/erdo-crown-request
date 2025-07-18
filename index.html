@@ -78,22 +78,34 @@
     .dropdown-wrap:hover .dropdown-content {
       display: block;
     }
+
+    /* Threshold row styling */
+    .threshold-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 10px;
+      margin-bottom: 2px;
+      width: 100%;
+    }
     .threshold-control {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-left: 20px;
       background: #262626;
       border-radius: 6px;
-      padding: 8px 10px;
+      padding: 8px 12px;
+      box-sizing: border-box;
+      min-width: 210px;
+      max-width: 330px;
     }
     .threshold-label {
       font-size: 13px;
       color: #aaa;
-      margin-right: 4px;
+      margin-right: 2px;
     }
     .threshold-value {
-      width: 40px;
+      width: 44px;
       text-align: right;
       font-size: 13px;
       background: #111;
@@ -104,8 +116,9 @@
       padding: 1px 4px;
     }
     .threshold-slider {
-      width: 120px;
+      width: 110px;
     }
+
     .footer {
       font-size: 10px;
       color: #bbb;
@@ -137,6 +150,9 @@
           <button onclick="runSync()">Approve Predictions</button>
         </div>
       </div>
+    </div>
+    <!-- Threshold control on its own row, centered -->
+    <div class="threshold-row">
       <div class="threshold-control">
         <span class="threshold-label">Threshold:</span>
         <input
@@ -237,7 +253,6 @@
     async function runPredict() {
       const project = getProjectFromURL();
       const thresh = getThreshold();
-      // Always include the threshold
       const url = `${API_BASE}/infer_project_name?project_name=${encodeURIComponent(project)}&thresh=${encodeURIComponent(thresh)}`;
       await streamEndpoint(url, "Predicting...");
     }
@@ -259,7 +274,6 @@
       document.getElementById('threshInput').value = parseFloat(val).toFixed(2);
     }
     function updateThreshSlider(val) {
-      // Clamp to range [0, 1]
       let v = Math.min(1, Math.max(0, parseFloat(val)));
       document.getElementById('threshSlider').value = v.toFixed(2);
       document.getElementById('threshInput').value = v.toFixed(2);
