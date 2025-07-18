@@ -15,7 +15,6 @@
       color: white;
       overflow: hidden;
     }
-
     .container {
       display: flex;
       flex-direction: column;
@@ -24,14 +23,13 @@
       padding: 8px 10px;
       box-sizing: border-box;
     }
-
     .button-row {
       display: flex;
       justify-content: center;
       gap: 12px;
       padding: 0 12px;
+      align-items: center;
     }
-
     .main-btn {
       background-color: #359f00;
       color: white;
@@ -42,21 +40,17 @@
       cursor: pointer;
       white-space: nowrap;
     }
-
     .main-btn:disabled {
       background-color: #777;
       cursor: not-allowed;
     }
-
     .dropdown-wrap {
       position: relative;
     }
-
     .dropdown-wrap .main-btn::after {
       content: " ▾";
       font-size: 10px;
     }
-
     .dropdown-content {
       display: none;
       position: absolute;
@@ -68,7 +62,6 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       z-index: 999;
     }
-
     .dropdown-content button {
       background: none;
       border: none;
@@ -79,15 +72,40 @@
       font-size: 12px;
       cursor: pointer;
     }
-
     .dropdown-content button:hover {
       background-color: #555;
     }
-
     .dropdown-wrap:hover .dropdown-content {
       display: block;
     }
-
+    .threshold-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 20px;
+      background: #262626;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    .threshold-label {
+      font-size: 13px;
+      color: #aaa;
+      margin-right: 4px;
+    }
+    .threshold-value {
+      width: 40px;
+      text-align: right;
+      font-size: 13px;
+      background: #111;
+      color: #aaff7b;
+      border: none;
+      margin-left: 3px;
+      border-radius: 3px;
+      padding: 1px 4px;
+    }
+    .threshold-slider {
+      width: 120px;
+    }
     .footer {
       font-size: 10px;
       color: #bbb;
@@ -96,14 +114,12 @@
       align-items: center;
       padding: 0 10px;
     }
-
     .logo-spinner {
       width: 40px;
       height: 40px;
       animation: spinLogo 1.2s linear infinite;
       margin: 10px 0;
     }
-
     @keyframes spinLogo {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -120,6 +136,29 @@
           <button onclick="runDelete()">Clear Predictions</button>
           <button onclick="runSync()">Approve Predictions</button>
         </div>
+      </div>
+      <div class="threshold-control">
+        <span class="threshold-label">Threshold:</span>
+        <input
+          id="threshSlider"
+          class="threshold-slider"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.7"
+          oninput="updateThreshInput(this.value)"
+        />
+        <input
+          id="threshInput"
+          class="threshold-value"
+          type="number"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.7"
+          onchange="updateThreshSlider(this.value)"
+        />
       </div>
     </div>
 
@@ -140,6 +179,13 @@
         throw new Error("Missing project parameter");
       }
       return project;
+    }
+
+    function getThreshold() {
+      // If the input is invalid or empty, return default 0.7
+      let val = parseFloat(document.getElementById('threshInput').value);
+      if (isNaN(val) || val < 0 || val > 1) return 0.7;
+      return val;
     }
 
     function setStatus(msg) {
@@ -181,7 +227,7 @@
 
         setStatus("Done");
       } catch (err) {
-        setStatus( err.message);
+        setStatus(err.message);
       } finally {
         showSpinner(false);
         disableAllButtons(false);
@@ -190,7 +236,9 @@
 
     async function runPredict() {
       const project = getProjectFromURL();
-      const url = `${API_BASE}/infer_project_name?project_name=${encodeURIComponent(project)}`;
+      const thresh = getThreshold();
+      // Always include the threshold
+      const url = `${API_BASE}/infer_project_name?project_name=${encodeURIComponent(project)}&thresh=${encodeURIComponent(thresh)}`;
       await streamEndpoint(url, "Predicting...");
     }
 
@@ -205,7 +253,17 @@
       const url = `${API_BASE}/sync_predictions_to_tree_crowns?project_name=${encodeURIComponent(project)}`;
       await streamEndpoint(url, "Approving predictions...");
     }
-  </script>
 
+    // Synchronize slider and number input
+    function updateThreshInput(val) {
+      document.getElementById('threshInput').value = parseFloat(val).toFixed(2);
+    }
+    function updateThreshSlider(val) {
+      // Clamp to range [0, 1]
+      let v = Math.min(1, Math.max(0, parseFloat(val)));
+      document.getElementById('threshSlider').value = v.toFixed(2);
+      document.getElementById('threshInput').value = v.toFixed(2);
+    }
+  </script>
 </body>
 </html>
