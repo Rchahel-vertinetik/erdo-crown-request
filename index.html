@@ -46,6 +46,7 @@
     }
     .dropdown-wrap {
       position: relative;
+      min-width: 170px;
     }
     .dropdown-wrap .main-btn::after {
       content: " ▾";
@@ -56,11 +57,13 @@
       position: absolute;
       top: 100%;
       left: 0;
-      width: 100%;
+      min-width: 190px;
       background-color: #444;
       border-radius: 4px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       z-index: 999;
+      padding-top: 4px;
+      padding-bottom: 4px;
     }
     .dropdown-content button {
       background: none;
@@ -75,48 +78,39 @@
     .dropdown-content button:hover {
       background-color: #555;
     }
-    .dropdown-wrap:hover .dropdown-content {
+    .dropdown-wrap:hover .dropdown-content,
+    .dropdown-wrap:focus-within .dropdown-content {
       display: block;
     }
 
-    /* Threshold row styling */
-    .threshold-row {
+    /* Threshold in dropdown */
+    .threshold-dropdown-control {
+      padding: 7px 10px 6px 10px;
+      background: #373737;
+      border-radius: 5px;
       display: flex;
-      justify-content: center;
       align-items: center;
-      margin-top: 10px;
+      gap: 8px;
       margin-bottom: 2px;
-      width: 100%;
-    }
-    .threshold-control {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #262626;
-      border-radius: 6px;
-      padding: 8px 12px;
-      box-sizing: border-box;
-      min-width: 210px;
-      max-width: 330px;
+      margin-top: 1px;
     }
     .threshold-label {
       font-size: 13px;
-      color: #aaa;
+      color: #bbb;
       margin-right: 2px;
     }
     .threshold-value {
-      width: 44px;
+      width: 42px;
       text-align: right;
       font-size: 13px;
       background: #111;
       color: #aaff7b;
       border: none;
-      margin-left: 3px;
       border-radius: 3px;
       padding: 1px 4px;
     }
     .threshold-slider {
-      width: 110px;
+      width: 90px;
     }
 
     .footer {
@@ -143,38 +137,38 @@
 
   <div class="container">
     <div class="button-row">
-      <div class="dropdown-wrap">
+      <div class="dropdown-wrap" tabindex="0">
         <button class="main-btn" onclick="runPredict()">Predict Crowns</button>
         <div class="dropdown-content">
+          <!-- Threshold control in dropdown -->
+          <div class="threshold-dropdown-control" onclick="event.stopPropagation()">
+            <span class="threshold-label">Threshold:</span>
+            <input
+              id="threshSlider"
+              class="threshold-slider"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.7"
+              oninput="updateThreshInput(this.value)"
+              style="vertical-align: middle;"
+            />
+            <input
+              id="threshInput"
+              class="threshold-value"
+              type="number"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0.7"
+              onchange="updateThreshSlider(this.value)"
+              style="vertical-align: middle;"
+            />
+          </div>
           <button onclick="runDelete()">Clear Predictions</button>
           <button onclick="runSync()">Approve Predictions</button>
         </div>
-      </div>
-    </div>
-    <!-- Threshold control on its own row, centered -->
-    <div class="threshold-row">
-      <div class="threshold-control">
-        <span class="threshold-label">Threshold:</span>
-        <input
-          id="threshSlider"
-          class="threshold-slider"
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value="0.7"
-          oninput="updateThreshInput(this.value)"
-        />
-        <input
-          id="threshInput"
-          class="threshold-value"
-          type="number"
-          min="0"
-          max="1"
-          step="0.01"
-          value="0.7"
-          onchange="updateThreshSlider(this.value)"
-        />
       </div>
     </div>
 
