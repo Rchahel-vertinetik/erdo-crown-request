@@ -18,27 +18,31 @@
     .container {
       display: flex;
       flex-direction: column;
-      height: 100%;
+      height: 105px;
       justify-content: space-between;
-      padding: 8px 10px;
+      padding: 0;
       box-sizing: border-box;
     }
     .button-row {
       display: flex;
       justify-content: center;
-      gap: 12px;
-      padding: 0 12px;
-      align-items: center;
+      align-items: flex-start;
+      height: 48px;
+      margin-top: 7px;
+      margin-bottom: 0;
     }
     .main-btn {
       background-color: #359f00;
       color: white;
       border: none;
-      padding: 10px 12px;
+      padding: 7px 12px;
       border-radius: 5px;
-      font-size: 16px;
+      font-size: 14px;
       cursor: pointer;
       white-space: nowrap;
+      height: 34px;
+      line-height: 17px;
+      min-width: 128px;
     }
     .main-btn:disabled {
       background-color: #777;
@@ -46,7 +50,7 @@
     }
     .dropdown-wrap {
       position: relative;
-      min-width: 170px;
+      min-width: 135px;
     }
     .dropdown-wrap .main-btn::after {
       content: " ▾";
@@ -55,15 +59,14 @@
     .dropdown-content {
       display: none;
       position: absolute;
-      top: 100%;
+      top: 98%;
       left: 0;
-      min-width: 190px;
+      min-width: 150px;
       background-color: #444;
       border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.21);
       z-index: 999;
-      padding-top: 4px;
-      padding-bottom: 4px;
+      padding: 5px 0 2px 0;
     }
     .dropdown-content button {
       background: none;
@@ -71,9 +74,10 @@
       color: white;
       width: 100%;
       text-align: left;
-      padding: 6px 10px;
+      padding: 4px 10px 3px 10px;
       font-size: 12px;
       cursor: pointer;
+      line-height: 15px;
     }
     .dropdown-content button:hover {
       background-color: #555;
@@ -83,49 +87,57 @@
       display: block;
     }
 
-    /* Threshold in dropdown */
+    /* Threshold dropdown compact style */
     .threshold-dropdown-control {
-      padding: 7px 10px 6px 10px;
+      padding: 2px 8px 2px 10px;
       background: #373737;
-      border-radius: 5px;
+      border-radius: 4px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 2px;
       margin-top: 1px;
+      height: 26px;
     }
     .threshold-label {
-      font-size: 13px;
+      font-size: 12px;
       color: #bbb;
       margin-right: 2px;
     }
     .threshold-value {
-      width: 42px;
+      width: 38px;
       text-align: right;
-      font-size: 13px;
+      font-size: 12px;
       background: #111;
       color: #aaff7b;
       border: none;
       border-radius: 3px;
-      padding: 1px 4px;
+      padding: 1px 2px;
+      height: 18px;
+      box-sizing: border-box;
     }
     .threshold-slider {
-      width: 90px;
+      width: 72px;
+      height: 18px;
+      margin: 0;
+      vertical-align: middle;
     }
-
     .footer {
       font-size: 10px;
       color: #bbb;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 10px;
+      height: 22px;
+      padding: 0 8px;
+      margin-top: 2px;
+      margin-bottom: 1px;
     }
     .logo-spinner {
-      width: 40px;
-      height: 40px;
+      width: 26px;
+      height: 22px;
       animation: spinLogo 1.2s linear infinite;
-      margin: 10px 0;
+      margin: 0 0 0 2px;
     }
     @keyframes spinLogo {
       0% { transform: rotate(0deg); }
@@ -142,7 +154,7 @@
         <div class="dropdown-content">
           <!-- Threshold control in dropdown -->
           <div class="threshold-dropdown-control" onclick="event.stopPropagation()">
-            <span class="threshold-label">Threshold:</span>
+            <span class="threshold-label">Thresh:</span>
             <input
               id="threshSlider"
               class="threshold-slider"
@@ -152,7 +164,7 @@
               step="0.01"
               value="0.7"
               oninput="updateThreshInput(this.value)"
-              style="vertical-align: middle;"
+              aria-label="Threshold slider"
             />
             <input
               id="threshInput"
@@ -163,7 +175,7 @@
               step="0.01"
               value="0.7"
               onchange="updateThreshSlider(this.value)"
-              style="vertical-align: middle;"
+              aria-label="Threshold input"
             />
           </div>
           <button onclick="runDelete()">Clear Predictions</button>
@@ -173,7 +185,7 @@
     </div>
 
     <div class="footer">
-      <div id="status">Ready</div>
+      <div id="status" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">Ready</div>
       <img id="spinner" class="logo-spinner" src="logo.png" style="display: none;" alt="Loading" />
     </div>
   </div>
